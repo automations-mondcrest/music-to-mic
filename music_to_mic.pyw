@@ -1,5 +1,6 @@
 """Music to Mic - send one app's sound (e.g. Brave) plus your mic into a virtual cable.
-Set WhatsApp's microphone to "CABLE Output" and callers hear both. Needs VB-Audio Virtual Cable.
+Set your call app's microphone to "CABLE Output" and callers hear both. Needs VB-Audio Virtual Cable.
+A quality-of-life project by Mondcrest Automations. MIT licence.
 Uses Windows per-process loopback capture (Win10 2004+), so call audio is never re-sent.
 """
 import ctypes, ctypes.wintypes as wt, threading, uuid, os, json, secrets, subprocess, webbrowser, time
@@ -42,12 +43,15 @@ def processes():
     return out
 
 
+UI_PID = [None]  # our own Edge window process
+
+
 def root_pid(exe):
     """Top process of an app (browsers play audio from a child process; capture covers the tree)."""
     procs, exe = processes(), exe.lower()
     for pid, (name, ppid) in procs.items():
-        if name.lower() == exe and procs.get(ppid, ("",))[0].lower() != exe:
-            return pid
+        if name.lower() == exe and procs.get(ppid, ("",))[0].lower() != exe and pid != UI_PID[0]:
+            return pid  # skips our own Edge window, so Edge works as a music source
 
 
 # ---------- raw COM: per-process loopback ----------
@@ -523,8 +527,10 @@ def main():
     url = f"http://127.0.0.1:{srv.server_address[1]}/?t={TOKEN}"
     if os.path.exists(EDGE):
         profile = os.path.join(os.environ["LOCALAPPDATA"], "MusicToMic", "edge")
-        subprocess.Popen([EDGE, f"--app={url}", f"--user-data-dir={profile}", "--no-first-run",
-                          "--no-default-browser-check", "--window-size=460,800"]).wait()  # own profile: exits when window closes
+        ui = subprocess.Popen([EDGE, f"--app={url}", f"--user-data-dir={profile}", "--no-first-run",
+                               "--no-default-browser-check", "--window-size=460,800"])
+        UI_PID[0] = ui.pid
+        ui.wait()  # own profile: exits when window closes
     else:
         webbrowser.open(url)
         threading.Event().wait()  # ponytail: no Edge -> runs until killed; add a Quit button if that ever matters

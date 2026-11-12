@@ -5,6 +5,8 @@ A simple alternative to Voicemeeter: one window, one Start button.
 
 A quality-of-life project by **Mondcrest Automations**.
 
+<p align="center"><img src="docs/screenshot.png" alt="Music to Mic window" width="380"></p>
+
 ## What it does
 
 - Captures the sound of **one app only** (e.g. Brave, Chrome, Spotify) using Windows per-app audio capture.
@@ -32,13 +34,13 @@ Call apps still apply their own noise suppression, so music will never sound stu
    right-click `VBCABLE_Setup_x64.exe` and run it as administrator, then restart.
 2. After restarting, check **Settings > System > Sound**. The installer may have made the cable your
    default speaker and mic. Set them back to your real headset.
-3. Download this repo, open a terminal in the folder and run:
+3. Download Music to Mic: grab the zip from the
+   [latest release](https://github.com/automations-mondcrest/music-to-mic/releases/latest) and unzip it
+   somewhere permanent (e.g. `Documents\music-to-mic`).
+4. Double-click **`install.bat`**. It installs the two Python packages it needs (`numpy`, `sounddevice`)
+   and puts a **Music to Mic** shortcut on your desktop.
 
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. Double-click `music_to_mic.pyw` to open the app (or run `pythonw music_to_mic.pyw`).
+Manual install instead: `pip install -r requirements.txt`, then double-click `music_to_mic.pyw`.
 
 ## Use
 
@@ -71,7 +73,13 @@ and never pick CABLE Output as "Your mic" in Music to Mic.
   and a small localhost-only web server (random token) for the window.
 - `sessions.py`: reads and sets the music app's Windows audio-session volume for Preview.
 - `ui.html`: the window, shown in an Edge app window.
-- `make_icon.py`: regenerates `icon.ico` and `icon.svg`.
+- `make_icon.py`: regenerates `icon.ico` and `icon.svg` (needs `pillow`).
+- `test_dsp.py`: self-check for the limiter, buffer and EQ maths, no sound devices needed: `python test_dsp.py`.
+
+Privacy: nothing leaves your PC. The window talks to the app over `127.0.0.1` only, with a random
+per-launch token, and the app itself makes no internet requests.
+
+Contributions welcome: open an issue or a pull request.
 
 ## License
 
