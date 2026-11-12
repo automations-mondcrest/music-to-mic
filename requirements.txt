@@ -1,0 +1,3 @@
+numpy>=1.24
+sounddevice>=0.5
+pillow>=10  # only for make_icon.py

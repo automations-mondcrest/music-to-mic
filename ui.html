@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music to Mic</title>
+<link rel="icon" href="/icon.svg">
+<style>
+  :root {
+    --bg: #161513;
+    --surface: #1e1d1a;
+    --line: #2e2c28;
+    --text: #ece7de;
+    --muted: #8e887e;
+    --amber: #f5a524;
+    --green: #8cc56b;
+    --red: #e25546;
+    --mono: "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.45 "Segoe UI", system-ui, sans-serif;
+    user-select: none;
+  }
+  main { max-width: 420px; margin: 0 auto; padding: 18px 18px 22px; }
+
+  header { display: flex; align-items: center; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  header img { width: 28px; height: 28px; }
+  header h1 { font-size: 15px; font-weight: 600; margin: 0; flex: 1; }
+  .onair {
+    font: 600 10.5px/1 var(--mono); letter-spacing: 1.5px; padding: 5px 8px; border-radius: 4px;
+    color: var(--muted); border: 1px solid var(--line); transition: color .2s, background .2s, border-color .2s;
+  }
+  body.live .onair { color: #fff; background: var(--red); border-color: var(--red); }
+
+  .label { font: 600 10.5px/1 var(--mono); letter-spacing: 1.4px; color: var(--muted); text-transform: uppercase; margin: 20px 0 10px; }
+
+  /* start / stop */
+  .go {
+    width: 100%; margin-top: 18px; padding: 15px; border-radius: 8px; cursor: pointer;
+    font: 600 15px/1 "Segoe UI", system-ui, sans-serif; letter-spacing: .3px;
+    background: var(--amber); color: #1b1a18; border: 1px solid var(--amber);
+    transition: background .15s, color .15s, transform .08s;
+  }
+  .go:hover { filter: brightness(1.06); }
+  .go:active { transform: translateY(1px); }
+  body.live .go { background: transparent; color: var(--text); border-color: var(--line); }
+  body.live .go:hover { border-color: var(--muted); }
+  .status { color: var(--muted); font-size: 12.5px; margin-top: 10px; min-height: 18px; }
+  .status.err { color: var(--red); }
+
+  /* segmented meter */
+  .meter { display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; height: 14px; }
+  .meter i { background: #262421; border-radius: 1.5px; transition: background .06s; }
+  .meter i.on { background: var(--green); }
+  .meter i.on.mid { background: var(--amber); }
+  .meter i.on.hot { background: var(--red); }
+  .meter i.peak { background: var(--text); }
+  .meter-foot { display: flex; justify-content: space-between; font: 11px/1 var(--mono); color: var(--muted); margin-top: 7px; }
+
+  /* sliders */
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; }
+  .row + .row { margin-top: 14px; }
+  .row output { font: 13px/1 var(--mono); color: var(--text); min-width: 46px; text-align: right; }
+  .row input { grid-column: 1 / -1; }
+  input[type=range] {
+    --p: 50%;
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; outline: none; margin: 6px 0;
+    background: linear-gradient(90deg, var(--amber) var(--p), #2e2c28 var(--p));
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 20px; border-radius: 3px; background: var(--text); cursor: pointer;
+    border: 1px solid #000;
+  }
+  input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  /* switches */
+  .opt { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; cursor: pointer; }
+  .opt + .opt { border-top: 1px solid var(--line); }
+  .opt small { display: block; color: var(--muted); font-size: 12px; }
+  .sw { position: relative; flex: none; width: 36px; height: 20px; }
+  .sw input { position: absolute; opacity: 0; }
+  .sw i { position: absolute; inset: 0; border-radius: 4px; background: #2a2825; transition: background .15s; }
+  .sw i::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 2px;
+    background: var(--muted); transition: transform .15s ease, background .15s;
+  }
+  .sw input:checked + i { background: var(--amber); }
+  .sw input:checked + i::after { transform: translateX(16px); background: #1b1a18; }
+  .sw input:focus-visible + i { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  /* devices */
+  details { border-top: 1px solid var(--line); margin-top: 18px; }
+  summary {
+    list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    font: 600 10.5px/1 var(--mono); letter-spacing: 1.4px; color: var(--muted); padding: 16px 0 4px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 14px; }
+  details[open] summary::after { content: "-"; }
+  .devs { display: grid; gap: 10px; padding-top: 8px; }
+  .devs label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  select {
+    width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+    padding: 7px 9px; font: inherit; font-size: 13px; outline: none;
+  }
+  select:focus { border-color: var(--amber); }
+  .btn {
+    background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+    padding: 7px 12px; font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .devs .btn { justify-self: start; }
+
+  .hint {
+    display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 12.5px; color: var(--muted);
+  }
+  .hint b { color: var(--text); font-weight: 600; }
+  .hint span { flex: 1; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="/icon.svg" alt="">
+    <h1>Music to Mic</h1>
+    <span class="onair" id="onair">OFF</span>
+  </header>
+
+  <button class="go" id="power">Start</button>
+  <div class="status" id="status">Loading...</div>
+
+  <div class="label">Output level</div>
+  <div class="meter" id="meter"></div>
+  <div class="meter-foot"><span>what callers hear</span><span id="lvlTxt">-</span></div>
+
+  <div class="label">Volume</div>
+  <div class="row">
+    <span>Music</span><output id="musicOut"></output>
+    <input type="range" id="music" min="0" max="300" step="5">
+  </div>
+  <div class="row">
+    <span>Mic</span><output id="micOut"></output>
+    <input type="range" id="mic" min="0" max="1000" step="10">
+  </div>
+
+  <div class="label">Options</div>
+  <label class="opt">
+    <div>Clarity<small>Crisper music</small></div>
+    <span class="sw"><input type="checkbox" id="clarity"><i></i></span>
+  </label>
+  <label class="opt">
+    <div>Preview<small>Hear exactly what callers hear</small></div>
+    <span class="sw"><input type="checkbox" id="preview"><i></i></span>
+  </label>
+
+  <details id="devDetails">
+    <summary>DEVICES</summary>
+    <div class="devs">
+      <label>Music from app <select id="app"></select></label>
+      <label>Your mic <select id="micDev"></select></label>
+      <label>Send to <select id="out"></select></label>
+      <label>Preview on <select id="previewOut"></select></label>
+      <button class="btn" id="refresh">Refresh list</button>
+    </div>
+  </details>
+
+  <div class="hint">
+    <span>Set your call app's mic to <b>CABLE Output</b></span>
+    <button class="btn" id="settings">Open settings</button>
+  </div>
+</main>
+
+<script>
+const T = new URLSearchParams(location.search).get("t");
+const $ = id => document.getElementById(id);
+const api = (path, body) => fetch("/api/" + path, {
+  method: body ? "POST" : "GET",
+  headers: { "X-Token": T, "Content-Type": "application/json" },
+  body: body ? JSON.stringify(body) : undefined,
+}).then(r => r.json());
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("m2m." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("m2m." + k, JSON.stringify(v)); } catch {} },
+};
+
+// 24 LED segments: green, amber from 70%, red from 90%
+const SEGS = 24, segs = [];
+for (let i = 0; i < SEGS; i++) {
+  const s = document.createElement("i");
+  if (i >= SEGS * 0.7) s.classList.add("mid");
+  if (i >= SEGS * 0.9) s.classList.replace("mid", "hot");
+  $("meter").appendChild(s); segs.push(s);
+}
+
+let running = false;
+
+function fill(sel, items, want, fallback) {
+  sel.innerHTML = "";
+  for (const it of items) sel.add(new Option(it, it));
+  sel.value = items.includes(want) ? want : fallback;
+}
+
+async function loadDevices(refresh) {
+  const d = await api("devices" + (refresh ? "?refresh=1" : ""));
+  fill($("app"), d.apps, store.get("app"), d.defaults.app);
+  fill($("micDev"), d.mics, store.get("micDev"), d.defaults.mic);
+  fill($("out"), d.outs, store.get("out"), d.defaults.out);
+  fill($("previewOut"), d.speakers, store.get("previewOut"), d.defaults.preview_out);
+  if (!d.defaults.out) { $("status").textContent = "VB-Cable not found. Install it, then press Refresh."; $("devDetails").open = true; }
+}
+
+function paintSlider(el) {
+  el.style.setProperty("--p", (el.value / el.max * 100) + "%");
+  $(el.id + "Out").textContent = el.value + "%";
+}
+
+function pushSettings() {
+  const s = { music: +$("music").value, mic: +$("mic").value, preview: $("preview").checked, clarity: $("clarity").checked };
+  for (const k in s) store.set(k, s[k]);
+  api("set", s);
+}
+
+for (const id of ["music", "mic"]) {
+  const el = $(id);
+  el.value = store.get(id, id === "music" ? 150 : 250);
+  paintSlider(el);
+  el.addEventListener("input", () => { paintSlider(el); pushSettings(); });
+}
+$("clarity").checked = store.get("clarity", true);
+$("preview").checked = false;
+for (const id of ["clarity", "preview"]) $(id).addEventListener("change", pushSettings);
+for (const id of ["app", "micDev", "out", "previewOut"]) $(id).addEventListener("change", e => store.set(id, e.target.value));
+$("refresh").addEventListener("click", () => loadDevices(true));
+$("settings").addEventListener("click", () => api("open-settings", {}));
+
+$("power").addEventListener("click", async () => {
+  $("status").classList.remove("err");
+  if (running) { await api("stop", {}); return; }
+  $("status").textContent = "Starting...";
+  pushSettings();
+  const r = await api("start", { app: $("app").value, mic: $("micDev").value, out: $("out").value, preview_out: $("previewOut").value });
+  if (!r.ok) { $("status").textContent = r.error; $("status").classList.add("err"); }
+});
+
+let level = 0, peak = 0, peakAge = 0;
+async function poll() {
+  try {
+    const s = await api("state");
+    running = s.running;
+    document.body.classList.toggle("live", running);
+    $("onair").textContent = running ? "ON AIR" : "OFF";
+    $("power").textContent = running ? "Stop" : "Start";
+    if (!$("status").classList.contains("err")) $("status").textContent = s.status;
+
+    level = Math.max(s.peak, level * 0.8);                       // fast rise, smooth fall
+    const lit = running ? Math.round(Math.min(1, level / 0.95) * SEGS) : 0;
+    if (lit >= peak) { peak = lit; peakAge = 0; } else if (++peakAge > 12) peak = Math.max(lit, peak - 1);
+    segs.forEach((g, i) => { g.classList.toggle("on", i < lit); g.classList.toggle("peak", running && i === peak - 1 && peak > lit); });
+    $("lvlTxt").textContent = !running ? "-" : s.limiting ? "limiting" : level > 0.3 ? "good" : "quiet";
+  } catch {}
+  setTimeout(poll, running ? 60 : 500);
+}
+
+loadDevices(false).then(() => { pushSettings(); poll(); });
+</script>
+</body>
+</html>
