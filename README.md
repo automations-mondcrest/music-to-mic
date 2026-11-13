@@ -25,22 +25,33 @@ Call apps still apply their own noise suppression, so music will never sound stu
 
 - Windows 10 version 2004 or newer, or Windows 11
 - Python 3.10+ ([python.org](https://www.python.org/downloads/))
-- [VB-Audio Virtual Cable](https://vb-audio.com/Cable/) (free donationware driver, not included)
+- [VB-CABLE](https://vb-audio.com/Cable/) virtual audio driver (installed for you by `install.bat`)
 - Microsoft Edge (comes with Windows; used to show the app window)
 
 ## Install
 
-1. Install VB-Cable: download the driver pack from [vb-audio.com/Cable](https://vb-audio.com/Cable/),
-   right-click `VBCABLE_Setup_x64.exe` and run it as administrator, then restart.
-2. After restarting, check **Settings > System > Sound**. The installer may have made the cable your
-   default speaker and mic. Set them back to your real headset.
-3. Download Music to Mic: grab the zip from the
+1. Download the zip from the
    [latest release](https://github.com/automations-mondcrest/music-to-mic/releases/latest) and unzip it
    somewhere permanent (e.g. `Documents\music-to-mic`).
-4. Double-click **`install.bat`**. It installs the two Python packages it needs (`numpy`, `sounddevice`)
-   and puts a **Music to Mic** shortcut on your desktop.
+2. Double-click **`install.bat`**. It:
+   - installs the two Python packages it needs (`numpy`, `sounddevice`)
+   - downloads the official VB-CABLE package from vb-audio.com, checks it is signed by VB-Audio,
+     and installs it (click **Yes** on the one admin prompt)
+   - hides the extra "CABLE In 16ch" device and keeps your normal speaker and mic as the defaults
+   - puts a **Music to Mic** shortcut on your desktop
 
-Manual install instead: `pip install -r requirements.txt`, then double-click `music_to_mic.pyw`.
+If VB-CABLE is already installed, that step is skipped. If the new devices don't show up, restart your PC.
+
+Manual install instead: install [VB-CABLE](https://vb-audio.com/Cable/) yourself,
+run `pip install -r requirements.txt`, then double-click `music_to_mic.pyw`.
+
+### About VB-CABLE
+
+VB-CABLE is made by **VB-Audio Software** ([vb-audio.com/Cable](https://vb-audio.com/Cable/), www.vb-cable.com).
+It is **donationware**, not part of this project: if Music to Mic is useful to you, please support
+VB-Audio with a donation or licence. Using it inside a company or organisation requires buying
+VB-CABLE licences from [VB-Audio's shop](https://shop.vb-audio.com/). Music to Mic uses the official,
+unmodified package, as VB-Audio's [distribution terms](https://vb-audio.com/Services/licensing.htm) allow.
 
 ## Use
 
@@ -74,10 +85,11 @@ and never pick CABLE Output as "Your mic" in Music to Mic.
 - `sessions.py`: reads and sets the music app's Windows audio-session volume for Preview.
 - `ui.html`: the window, shown in an Edge app window.
 - `make_icon.py`: regenerates `icon.ico` and `icon.svg` (needs `pillow`).
+- `setup_cable.py`: downloads, verifies and installs VB-CABLE, then restores your default devices.
 - `test_dsp.py`: self-check for the limiter, buffer and EQ maths, no sound devices needed: `python test_dsp.py`.
 
 Privacy: nothing leaves your PC. The window talks to the app over `127.0.0.1` only, with a random
-per-launch token, and the app itself makes no internet requests.
+per-launch token, and the app itself makes no internet requests (only `setup_cable.py` contacts vb-audio.com, once).
 
 Contributions welcome: open an issue or a pull request.
 

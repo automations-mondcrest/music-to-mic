@@ -213,7 +213,7 @@ async function loadDevices(refresh) {
   fill($("micDev"), d.mics, store.get("micDev"), d.defaults.mic);
   fill($("out"), d.outs, store.get("out"), d.defaults.out);
   fill($("previewOut"), d.speakers, store.get("previewOut"), d.defaults.preview_out);
-  if (!d.defaults.out) { $("status").textContent = "VB-Cable not found. Install it, then press Refresh."; $("devDetails").open = true; }
+  if (!d.defaults.out) { $("status").textContent = "VB-CABLE not found. Run install.bat again (it installs VB-CABLE), then press Refresh."; $("devDetails").open = true; }
 }
 
 function paintSlider(el) {
